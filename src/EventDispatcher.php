@@ -20,7 +20,7 @@ class EventDispatcher
      * @param string $eventName The name of the event to dispatch. The name of
      *                          the event is the name of the method that is
      *                          invoked on listeners.
-     * @param Event  $event     The event to pass to the event handlers/listeners
+     * @param Event $event The event to pass to the event handlers/listeners
      *                          If not supplied, an empty Event instance is created
      *
      * @return Event
@@ -73,8 +73,8 @@ class EventDispatcher
      *
      * Returns null if the event or the listener does not exist.
      *
-     * @param string   $eventName The name of the event
-     * @param callable $listener  The listener
+     * @param string $eventName The name of the event
+     * @param callable $listener The listener
      *
      * @return int|null The event listener priority
      */
@@ -127,49 +127,33 @@ class EventDispatcher
     /**
      * Adds an event listener that listens on the specified events.
      *
-     * @param string   $eventName The event to listen on
-     * @param callable $listener  The listener
-     * @param int      $priority  The higher this value, the earlier an event
+     * @param string $eventName The event to listen on
+     * @param callable $listener The listener
+     * @param int $priority The higher this value, the earlier an event
      *                            listener will be triggered in the chain (defaults to 0)
+     * @return callable
      */
     public function addListener($eventName, $listener, $priority = 0)
     {
         $this->listeners[$eventName][$priority][] = $listener;
         unset($this->sorted[$eventName]);
+        return $listener;
     }
 
     /**
      * Removes an event listener from the specified events.
      *
-     * @param string   $eventName The event to remove a listener from
-     * @param callable $listener  The listener to remove
+     * @param string $eventName The event to remove a listener from
+     * @param callable $listener The listener to remove
      */
     public function removeListener($eventName, $listener)
     {
-        if (empty($this->listeners[$eventName])) {
+        if (!isset($this->listeners[$eventName])) {
             return;
         }
-
-        if (\is_array($listener) && isset($listener[0]) && $listener[0] instanceof \Closure) {
-            $listener[0] = $listener[0]();
-        }
-
         foreach ($this->listeners[$eventName] as $priority => $listeners) {
-            foreach ($listeners as $k => $v) {
-                if ($v !== $listener && \is_array($v) && isset($v[0]) && $v[0] instanceof \Closure) {
-                    $v[0] = $v[0]();
-                }
-                if ($v === $listener) {
-                    unset($listeners[$k], $this->sorted[$eventName]);
-                } else {
-                    $listeners[$k] = $v;
-                }
-            }
-
-            if ($listeners) {
-                $this->listeners[$eventName][$priority] = $listeners;
-            } else {
-                unset($this->listeners[$eventName][$priority]);
+            if (false !== ($key = array_search($listener, $listeners, true))) {
+                unset($this->listeners[$eventName][$priority][$key], $this->sorted[$eventName]);
             }
         }
     }
@@ -219,8 +203,8 @@ class EventDispatcher
      * for each listener.
      *
      * @param callable[] $listeners The event listeners
-     * @param string     $eventName The name of the event to dispatch
-     * @param Event      $event     The event object to pass to the event handlers/listeners
+     * @param string $eventName The name of the event to dispatch
+     * @param Event $event The event object to pass to the event handlers/listeners
      */
     protected function doDispatch($listeners, $eventName, Event $event)
     {
