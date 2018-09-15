@@ -3,7 +3,6 @@ use Aw\EventDispatcher;
 
 class DispatcherTest extends PHPUnit_Framework_TestCase
 {
-
     public function testDispatcher()
     {
         $this->load();
@@ -17,7 +16,7 @@ class DispatcherTest extends PHPUnit_Framework_TestCase
 
         $dispatcher->dispatch('acme.foo.action', new OrderPlacedEvent(new Order(123)));
         $dispatcher->dispatch('acme.foo.action', new OrderPlacedEvent(new Order(456)));
-
+        print "---------------------------------------------\n\n";
         //var_export($dispatcher->getListeners());
     }
 
@@ -36,6 +35,7 @@ class DispatcherTest extends PHPUnit_Framework_TestCase
         $dispatcher->dispatch('acme.foo.action', new OrderPlacedEvent(new Order(123)));
         $dispatcher->removeListener('acme.foo.action', $re);
         $dispatcher->dispatch('acme.foo.action', new OrderPlacedEvent(new Order(456)));
+        print "---------------------------------------------\n\n";
 
         //var_export($dispatcher->getListeners());
     }
@@ -57,6 +57,31 @@ class DispatcherTest extends PHPUnit_Framework_TestCase
         },2);
 
         $dispatcher->dispatch('acme.foo.action', new OrderPlacedEvent(new Order(123)));
+        print "---------------------------------------------\n\n";
+
+        //var_export($dispatcher->getListeners());
+    }
+
+
+    public function testStop()
+    {
+        $this->load();
+        $dispatcher = new EventDispatcher();
+        $dispatcher->addListener('acme.foo.action', function () {
+            print "my priority is 0\n";
+        });
+
+        $dispatcher->addListener('acme.foo.action', function () {
+            print "my priority is -1\n";
+        },-1);
+
+        $dispatcher->addListener('acme.foo.action', function (\Aw\Event $event) {
+            print "my priority is 2,and i decide to stop Propagation\n";
+            $event->stopPropagation();
+        },2);
+
+        $dispatcher->dispatch('acme.foo.action', new OrderPlacedEvent(new Order(123)));
+        print "---------------------------------------------\n\n";
 
         //var_export($dispatcher->getListeners());
     }
